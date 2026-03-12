@@ -15,7 +15,7 @@ export function SearchBar({
   value,
   onChange,
   isLoading = false,
-  placeholder = "Search for a product, brand or ingredient…",
+  placeholder = "Search a product, brand — or paste any grocery store URL",
   className,
 }: SearchBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
