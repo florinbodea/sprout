@@ -33,8 +33,16 @@ export function AuthGuard({ children }: AuthGuardProps) {
     }
   }, [isLoading, user, pathname, router]);
 
-  // During localStorage hydration — render nothing (prevents flash-redirect)
-  if (isLoading) return null;
+  // During localStorage hydration — show a minimal spinner instead of blank page
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-3 text-gray-400">
+          <span className="text-4xl animate-pulse">🌿</span>
+        </div>
+      </div>
+    );
+  }
 
   // Public routes — always render regardless of auth state
   if (PUBLIC_ROUTES.includes(pathname)) return <>{children}</>;
