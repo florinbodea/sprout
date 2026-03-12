@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ProfileProvider } from "@/context/ProfileContext";
+import { ShoppingListProvider } from "@/context/ShoppingListContext";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import "./globals.css";
@@ -31,9 +32,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ProfileProvider>
-          <Navbar />
-          <main>{children}</main>
-          <Footer />
+          <ShoppingListProvider>
+            <Navbar />
+            <main>{children}</main>
+            <Footer />
+          </ShoppingListProvider>
         </ProfileProvider>
       </body>
     </html>
