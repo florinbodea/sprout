@@ -39,16 +39,16 @@ export default function LandingPage() {
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
           <Link
-            href="/search"
+            href="/register"
             className="rounded-2xl bg-emerald-500 px-8 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 transition"
           >
-            Search products →
+            Get started free →
           </Link>
           <Link
-            href="/profile"
+            href="/search"
             className="rounded-2xl border border-gray-200 bg-white px-8 py-3.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition"
           >
-            Set up my profile
+            Browse products
           </Link>
         </div>
       </section>
@@ -80,13 +80,13 @@ export default function LandingPage() {
       <section className="bg-emerald-500 px-6 py-14 text-center text-white">
         <h2 className="text-2xl font-bold mb-3">Ready to start shopping smarter?</h2>
         <p className="text-emerald-100 mb-6 text-sm">
-          No account needed. Your profile is saved privately on your device.
+          Create a free account in 30 seconds. Your data stays on your device.
         </p>
         <Link
-          href="/search"
+          href="/register"
           className="inline-block rounded-2xl bg-white px-8 py-3 text-sm font-semibold text-emerald-600 hover:bg-emerald-50 transition shadow"
         >
-          Try it now — it&apos;s free
+          Create free account →
         </Link>
       </section>
     </div>

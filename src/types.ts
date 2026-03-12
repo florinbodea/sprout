@@ -112,3 +112,17 @@ export interface SearchResult {
   page: number;
   pageSize: number;
 }
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
+export interface AuthUser {
+  id: string;                   // crypto.randomUUID() generated at registration
+  name: string;
+  email: string;
+  registeredAt: string;         // ISO date string
+  onboardingComplete: boolean;
+  // Note: password is intentionally NOT stored — validated on the form for
+  // demo credibility but never persisted anywhere.
+}
+
+export const AUTH_STORAGE_KEY = "sprout:auth";

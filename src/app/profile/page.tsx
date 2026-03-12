@@ -1,75 +1,15 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useProfile } from "@/context/ProfileContext";
+import { useAuth } from "@/context/AuthContext";
 import {
   Allergen,
   DietaryGoal,
   DietaryPreference,
 } from "@/types";
 import { cn } from "@/lib/utils";
-
-// ─── Option definitions ───────────────────────────────────────────────────────
-
-const GOALS: { value: DietaryGoal; label: string; icon: string }[] = [
-  { value: "general-wellness", label: "General wellness", icon: "🌿" },
-  { value: "weight-loss", label: "Weight loss", icon: "⚖️" },
-  { value: "muscle-gain", label: "Muscle gain", icon: "💪" },
-  { value: "heart-health", label: "Heart health", icon: "❤️" },
-  { value: "diabetes-friendly", label: "Diabetes-friendly", icon: "🩺" },
-];
-
-const ALLERGENS: { value: Allergen; label: string }[] = [
-  { value: "gluten", label: "Gluten" },
-  { value: "dairy", label: "Dairy" },
-  { value: "eggs", label: "Eggs" },
-  { value: "nuts", label: "Nuts" },
-  { value: "peanuts", label: "Peanuts" },
-  { value: "soy", label: "Soy" },
-  { value: "fish", label: "Fish" },
-  { value: "shellfish", label: "Shellfish" },
-  { value: "sesame", label: "Sesame" },
-];
-
-const PREFERENCES: { value: DietaryPreference; label: string; icon: string }[] = [
-  { value: "vegan", label: "Vegan", icon: "🌱" },
-  { value: "vegetarian", label: "Vegetarian", icon: "🥦" },
-  { value: "pescatarian", label: "Pescatarian", icon: "🐟" },
-  { value: "keto", label: "Keto", icon: "🥑" },
-  { value: "paleo", label: "Paleo", icon: "🍖" },
-  { value: "halal", label: "Halal", icon: "☪️" },
-  { value: "kosher", label: "Kosher", icon: "✡️" },
-];
-
-// ─── Chip component ───────────────────────────────────────────────────────────
-
-function Chip({
-  label,
-  icon,
-  selected,
-  onClick,
-}: {
-  label: string;
-  icon?: string;
-  selected: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition select-none",
-        selected
-          ? "border-emerald-400 bg-emerald-50 text-emerald-700"
-          : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
-      )}
-    >
-      {icon && <span aria-hidden>{icon}</span>}
-      {label}
-      {selected && <span className="ml-0.5 text-emerald-500" aria-hidden>✓</span>}
-    </button>
-  );
-}
+import { GOALS, ALLERGENS, PREFERENCES, Chip, Toggle } from "@/lib/profileOptions";
 
 // ─── Section wrapper ──────────────────────────────────────────────────────────
 
@@ -95,56 +35,25 @@ function Section({
   );
 }
 
-// ─── Toggle ───────────────────────────────────────────────────────────────────
-
-function Toggle({
-  label,
-  description,
-  checked,
-  onChange,
-}: {
-  label: string;
-  description: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <label className="flex items-center justify-between gap-4 rounded-2xl border border-gray-100 bg-white p-4 cursor-pointer hover:bg-gray-50 transition">
-      <div>
-        <p className="text-sm font-medium text-gray-800">{label}</p>
-        <p className="text-xs text-gray-400">{description}</p>
-      </div>
-      <div
-        className={cn(
-          "relative inline-flex h-6 w-11 flex-shrink-0 rounded-full transition-colors duration-200",
-          checked ? "bg-emerald-500" : "bg-gray-200"
-        )}
-      >
-        <span
-          className={cn(
-            "inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 mt-0.5",
-            checked ? "translate-x-5.5 ml-0.5" : "translate-x-0.5"
-          )}
-        />
-        <input
-          type="checkbox"
-          className="sr-only"
-          checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
-        />
-      </div>
-    </label>
-  );
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ProfilePage() {
   const { profile, updateProfile, resetProfile } = useProfile();
+  const { user } = useAuth();
+  const router = useRouter();
 
   function toggle<T>(arr: T[], value: T): T[] {
     return arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
   }
+
+  const memberSince = user?.registeredAt
+    ? new Date(user.registeredAt).toLocaleDateString("en-GB", {
+        month: "long",
+        year: "numeric",
+      })
+    : null;
+
+  const initial = user?.name?.charAt(0).toUpperCase() ?? "?";
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24 md:pb-8">
@@ -157,6 +66,31 @@ export default function ProfilePage() {
           </p>
         </div>
 
+        {/* Identity card */}
+        {user && (
+          <div className="rounded-2xl border border-gray-100 bg-white p-5 flex items-center gap-4">
+            <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center text-lg font-bold text-emerald-700 flex-shrink-0">
+              {initial}
+            </div>
+            <div className="min-w-0">
+              <p className="font-semibold text-gray-900 truncate">{user.name}</p>
+              <p className="text-sm text-gray-400 truncate">{user.email}</p>
+              {memberSince && (
+                <p className="text-xs text-gray-300 mt-0.5">Member since {memberSince}</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Re-run onboarding */}
+        <button
+          type="button"
+          onClick={() => router.push("/onboarding?from=profile")}
+          className="w-full rounded-2xl border border-emerald-200 py-3 text-sm font-medium text-emerald-600 hover:bg-emerald-50 transition"
+        >
+          Re-run setup wizard →
+        </button>
+
         {/* Goals */}
         <Section
           title="Health goals"
@@ -168,9 +102,9 @@ export default function ProfilePage() {
                 key={value}
                 label={label}
                 icon={icon}
-                selected={profile.goals.includes(value)}
+                selected={profile.goals.includes(value as DietaryGoal)}
                 onClick={() =>
-                  updateProfile({ goals: toggle(profile.goals, value) })
+                  updateProfile({ goals: toggle(profile.goals, value as DietaryGoal) })
                 }
               />
             ))}
@@ -187,9 +121,9 @@ export default function ProfilePage() {
               <Chip
                 key={value}
                 label={label}
-                selected={profile.allergens.includes(value)}
+                selected={profile.allergens.includes(value as Allergen)}
                 onClick={() =>
-                  updateProfile({ allergens: toggle(profile.allergens, value) })
+                  updateProfile({ allergens: toggle(profile.allergens, value as Allergen) })
                 }
               />
             ))}
@@ -207,10 +141,10 @@ export default function ProfilePage() {
                 key={value}
                 label={label}
                 icon={icon}
-                selected={profile.preferences.includes(value)}
+                selected={profile.preferences.includes(value as DietaryPreference)}
                 onClick={() =>
                   updateProfile({
-                    preferences: toggle(profile.preferences, value),
+                    preferences: toggle(profile.preferences, value as DietaryPreference),
                   })
                 }
               />
