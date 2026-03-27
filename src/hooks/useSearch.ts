@@ -3,6 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Product, SearchResult } from "@/types";
 
+function isUrl(input: string): boolean {
+  try {
+    const u = new URL(input.trim());
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 interface UseSearchState {
   query: string;
   results: Product[];
@@ -20,7 +29,9 @@ interface UseSearchReturn extends UseSearchState {
   clear: () => void;
 }
 
+// Debounce URL pastes less aggressively than keystrokes
 const DEBOUNCE_MS = 400;
+const URL_DEBOUNCE_MS = 100;
 
 export function useSearch(initialQuery = ""): UseSearchReturn {
   const [query, setQueryRaw] = useState(initialQuery);
@@ -38,17 +49,60 @@ export function useSearch(initialQuery = ""): UseSearchReturn {
 
   // Debounce the query
   useEffect(() => {
+    const delay = isUrl(query) ? URL_DEBOUNCE_MS : DEBOUNCE_MS;
     const id = setTimeout(() => {
       setDebouncedQuery(query);
-      setPage(1); // reset to page 1 on new query
-    }, DEBOUNCE_MS);
+      setPage(1);
+    }, delay);
     return () => clearTimeout(id);
   }, [query]);
+
+  const fetchFromUrl = useCallback(async (url: string) => {
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+    setState((prev) => ({ ...prev, isLoading: true, error: null }));
+
+    try {
+      const res = await fetch("/api/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+        signal: abortRef.current.signal,
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `Could not extract product (${res.status})`);
+      }
+
+      const { product }: { product: Product } = await res.json();
+      setState({
+        results: [product],
+        total: 1,
+        pageSize: 1,
+        isLoading: false,
+        error: null,
+      });
+    } catch (err) {
+      if ((err as Error).name === "AbortError") return;
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: (err as Error).message ?? "Failed to extract product from URL",
+      }));
+    }
+  }, []);
 
   const fetchResults = useCallback(
     async (q: string, p: number) => {
       if (!q.trim()) {
         setState({ results: [], total: 0, pageSize: 20, isLoading: false, error: null });
+        return;
+      }
+
+      // URL path — call extract endpoint
+      if (isUrl(q)) {
+        fetchFromUrl(q);
         return;
       }
 
@@ -76,7 +130,7 @@ export function useSearch(initialQuery = ""): UseSearchReturn {
           error: null,
         });
       } catch (err) {
-        if ((err as Error).name === "AbortError") return; // ignore cancellations
+        if ((err as Error).name === "AbortError") return;
         setState((prev) => ({
           ...prev,
           isLoading: false,
@@ -84,7 +138,7 @@ export function useSearch(initialQuery = ""): UseSearchReturn {
         }));
       }
     },
-    []
+    [fetchFromUrl]
   );
 
   // Trigger fetch when debounced query or page changes
